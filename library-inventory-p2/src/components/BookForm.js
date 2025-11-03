@@ -1,15 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function BookForm({ addBook, editBook, editingBook }) {
-  const [title, setTitle] = useState(editingBook?.title || "");
-  const [description, setDescription] = useState(editingBook?.description || "");
-  const [image, setImage] = useState(editingBook?.image || null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [image, setImage] = useState(null);
+
+  // Cuando editingBook cambia → actualizar los campos
+  useEffect(() => {
+    if (editingBook) {
+      setTitle(editingBook.title);
+      setDescription(editingBook.description);
+      setImage(editingBook.image);
+    } else {
+      setTitle("");
+      setDescription("");
+      setImage(null);
+    }
+  }, [editingBook]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!title || !description || !image) return;
 
-    const book = { title, description, image };
+    const book = editingBook
+      ? { ...editingBook, title, description, image }
+      : { title, description, image, id: Date.now() };
+
     if (editingBook) {
       editBook(book);
     } else {
@@ -23,15 +39,17 @@ export default function BookForm({ addBook, editBook, editingBook }) {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (event) => setImage(event.target.result);
-    if (file) reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
   };
 
   return (
     <form onSubmit={handleSubmit} className="mb-4">
       <div className="mb-3">
-        <label>Título del Libro</label>
+        <label className="form-label">Título del Libro</label>
         <input
           type="text"
           className="form-control"
@@ -42,22 +60,27 @@ export default function BookForm({ addBook, editBook, editingBook }) {
       </div>
 
       <div className="mb-3">
-        <label>Descripción del Libro</label>
+        <label className="form-label">Descripción del Libro</label>
         <textarea
           className="form-control"
           rows="3"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           required
-        ></textarea>
+        />
       </div>
 
       <div className="mb-3">
-        <label>Imagen del Libro</label>
-        <input type="file" className="form-control" accept="image/*" onChange={handleImageChange} />
+        <label className="form-label">Imagen del Libro</label>
+        <input
+          type="file"
+          className="form-control"
+          accept="image/*"
+          onChange={handleImageChange}
+        />
       </div>
 
-      <button type="submit" className="btn btn-primary">
+      <button type="submit" className="btn btn-primary w-100">
         {editingBook ? "Guardar Cambios" : "Agregar Libro"}
       </button>
     </form>
